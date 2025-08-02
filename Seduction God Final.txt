@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ό,τι Σου Είπαν Είναι Ψέμα</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #000000;
+            --fg: #f1f1f1;
+            --muted: #555555;
+            --accent: #ffffff;
+            --border: #222222;
+            --font: 'Inter', sans-serif;
+            --ease: cubic-bezier(0.8, 0, 0.2, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            background: var(--bg); color: var(--fg); font-family: var(--font);
+            -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+            overflow-x: hidden;
+            background-image: radial-gradient(circle at 50% 0, rgba(255, 255, 255, 0.05), transparent 50%);
+        }
+        .container { width: 100%; max-width: 900px; margin: 0 auto; padding: 0 clamp(20px, 5vw, 60px); }
+        .fade-in-section { opacity: 0; transform: translateY(40px); transition: opacity 1.2s var(--ease), transform 1.2s var(--ease); }
+        .fade-in-section.is-visible { opacity: 1; transform: translateY(0); }
+        .hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        .hero h1 { font-size: clamp(2.5rem, 8vw, 5.5rem); font-weight: 900; color: var(--accent); line-height: 1.1; letter-spacing: -0.04em; text-transform: uppercase; }
+        .animated-title span { display: inline-block; opacity: 0; transform: translateY(30px) scale(0.9); animation: revealLetter 1s var(--ease) forwards; }
+        .animated-title .line-break { display: block; margin-top: 0.2em; }
+        @keyframes revealLetter { to { opacity: 1; transform: translateY(0) scale(1); } }
+
+        /* ARCADE GAME STYLES - Modified for blending */
+        .arcade-section {
+            padding: 10vh 0;
+            font-family: 'Orbitron', monospace;
+            color: #00ff00;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+        .arcade-machine {
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+            background: linear-gradient(145deg, #1a0033, #000011);
+            border: 3px solid #ff00ff;
+            border-radius: 20px;
+            box-shadow: 0 0 50px #ff00ff, inset 0 0 50px rgba(255, 0, 255, 0.1);
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        .arcade-machine::before {
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: conic-gradient(transparent, #ff00ff, transparent, #00ffff, transparent);
+            animation: rotate 4s linear infinite; z-index: -1;
+        }
+        @keyframes rotate { 100% { transform: rotate(360deg); } }
+        .arcade-machine::after {
+            content: ''; position: absolute; top: 3px; left: 3px; right: 3px; bottom: 3px;
+            background: linear-gradient(145deg, #1a0033, #000011); border-radius: 17px; z-index: -1;
+        }
+        .arcade-header { text-align: center; margin-bottom: 20px; position: relative; }
+        .arcade-title {
+            font-size: clamp(2rem, 6vw, 3rem); font-weight: 900; letter-spacing: 3px;
+            background: linear-gradient(45deg, #ff00ff, #00ffff, #ff0080, #8000ff);
+            background-size: 400% 400%;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+            animation: gradientShift 2s ease-in-out infinite alternate;
+            text-shadow: 0 0 30px #ff00ff; margin-bottom: 10px;
+        }
+        @keyframes gradientShift { 0% { background-position: 0% 50%; } 100% { background-position: 100% 50%; } }
+        .arcade-subtitle {
+            font-size: 1.2rem; color: #00ff80; text-transform: uppercase; letter-spacing: 2px;
+            text-shadow: 0 0 10px #00ff80; animation: glow 2s ease-in-out infinite alternate;
+        }
+        @keyframes glow { from { text-shadow: 0 0 10px #00ff80; } to { text-shadow: 0 0 20px #00ff80, 0 0 30px #00ff80; } }
+        .screen-container {
+            background: #000; border: 4px solid #00ffff; border-radius: 15px; overflow: hidden; position: relative;
+            box-shadow: 0 0 30px #00ffff, inset 0 0 20px rgba(0, 255, 255, 0.2);
+        }
+        #gameCanvas { 
+            display: block; 
+            width: 100%; 
+            height: auto;
+            aspect-ratio: 2 / 1;
+            background: #000; 
+            cursor: crosshair; 
+            filter: brightness(1.1) contrast(1.2); 
+        }
+        .scanlines {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 255, 255, 0.1) 2px, rgba(0, 255, 255, 0.1) 4px);
+            pointer-events: none; animation: scanlineMove 0.1s linear infinite;
+        }
+        @keyframes scanlineMove { 0% { transform: translateY(0); } 100% { transform: translateY(4px); } }
+        .control-panel {
+            background: linear-gradient(145deg, #2a0055, #110022); border: 2px solid #ff00ff;
+            border-radius: 10px; margin-top: 15px; padding: 20px;
+            box-shadow: 0 0 20px #ff00ff, inset 0 0 20px rgba(255, 0, 255, 0.1);
+        }
+        .stats-neon { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        .stat-display {
+            text-align: center; background: rgba(0, 0, 0, 0.6); border: 2px solid;
+            border-radius: 8px; padding: 15px 10px; position: relative; overflow: hidden;
+        }
+        .stat-display::before {
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: linear-gradient(45deg, transparent, currentColor, transparent);
+            opacity: 0.1; animation: shine 3s linear infinite;
+        }
+        @keyframes shine { 0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); } 100% { transform: translateX(100%) translateY(100%) rotate(45deg); } }
+        .score-stat { border-color: #ff0080; color: #ff0080; }
+        .level-stat { border-color: #00ff80; color: #00ff80; }
+        .frame-stat { border-color: #8080ff; color: #8080ff; }
+        .stat-label { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; opacity: 0.8; }
+        .stat-value { font-size: 1.8rem; font-weight: 900; text-shadow: 0 0 10px currentColor; animation: pulse 2s ease-in-out infinite; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        .mastery-section { margin-bottom: 20px; }
+        .mastery-title {
+            text-align: center; font-size: 1.3rem; font-weight: 700; color: #ffff00;
+            text-transform: uppercase; letter-spacing: 2px; margin-bottom: 12px;
+            text-shadow: 0 0 15px #ffff00; animation: flicker 1.5s ease-in-out infinite alternate;
+        }
+        @keyframes flicker { 0%, 100% { opacity: 1; } 50% { opacity: 0.8; } }
+        .progress-container { height: 12px; background: #001122; border: 2px solid #00ffff; border-radius: 6px; overflow: hidden; }
+        .progress-fill {
+            height: 100%; background: linear-gradient(90deg, #ff00ff, #ff0080, #ffff00, #00ff80);
+            background-size: 200% 100%; transition: width 0.5s ease; animation: progressFlow 2s linear infinite;
+            box-shadow: 0 0 15px currentColor;
+        }
+        @keyframes progressFlow { 0% { background-position: 0% 0%; } 100% { background-position: 200% 0%; } }
+        .controls-info {
+            text-align: center; font-size: 0.9rem; color: #00ffff; line-height: 1.6;
+            text-shadow: 0 0 5px #00ffff; background: rgba(0, 255, 255, 0.1);
+            padding: 10px; border-radius: 5px; border: 1px solid #00ffff;
+        }
+        .overlay-element { position: absolute; pointer-events: none; font-family: 'Orbitron', monospace; font-weight: 700; z-index: 10; }
+        .combo-display {
+            top: 15px; right: 15px; color: #ffff00; font-size: 1.5rem; opacity: 0;
+            transform: scale(0.5); transition: all 0.3s ease; text-shadow: 0 0 20px #ffff00;
+        }
+        .combo-display.active { opacity: 1; transform: scale(1.2); animation: comboGlow 0.5s ease-in-out infinite alternate; }
+        @keyframes comboGlow { from { text-shadow: 0 0 20px #ffff00; } to { text-shadow: 0 0 30px #ffff00, 0 0 40px #ffff00; } }
+        .achievement-popup {
+            top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0);
+            background: linear-gradient(145deg, #000033, #330066); border: 3px solid #ff00ff;
+            border-radius: 15px; padding: 30px; text-align: center; opacity: 0;
+            transition: all 0.5s ease; max-width: 350px;
+            box-shadow: 0 0 50px #ff00ff, inset 0 0 20px rgba(255, 0, 255, 0.2);
+        }
+        .achievement-popup.show { opacity: 1; transform: translate(-50%, -50%) scale(1); animation: achievementPulse 0.5s ease-in-out; }
+        @keyframes achievementPulse { 0%, 100% { transform: translate(-50%, -50%) scale(1); } 50% { transform: translate(-50%, -50%) scale(1.05); } }
+        
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .arcade-title { font-size: 2rem; }
+            .stats-neon { gap: 10px; }
+            .stat-value { font-size: 1.4rem; }
+            .achievement-popup { padding: 20px; max-width: 90%; }
+            .achievement-popup div:nth-child(2) { font-size: 1.2rem; }
+            .achievement-popup div:nth-child(3) { font-size: 0.9rem; }
+            .achievement-popup div:nth-child(4) { font-size: 1.1rem; }
+        }
+
+        /* REST OF PAGE STYLES */
+        .interstitial { min-height: 80vh; display: flex; align-items: center; justify-content: center; text-align: center; }
+        .interstitial p { font-size: clamp(1.75rem, 5vw, 2.8rem); font-weight: 700; line-height: 1.4; color: var(--muted); max-width: 750px; text-wrap: pretty; }
+        .reveal-text { filter: blur(8px); opacity: 0.4; transition: filter 1s var(--ease), opacity 1s var(--ease); display: inline-block; }
+        .reveal-text.is-revealed { filter: blur(0); opacity: 1; color: var(--fg); }
+        .persona-section { padding: 20vh 0; background-color: #050505; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+        .persona-section p { font-size: clamp(1.5rem, 4vw, 2.5rem); font-weight: 700; line-height: 1.5; text-align: center; text-wrap: pretty; }
+        .motion-title-section {
+            position: relative; padding: 15vh 0 10vh 0; background: #000000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            min-height: 60vh; overflow: hidden;
+        }
+        .motion-canvas-wrapper {
+            position: relative; width: 100%; height: 200px; display: flex;
+            align-items: center; justify-content: center; margin-bottom: 40px;
+        }
+        #motion-title-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+        .motion-title-map {
+            opacity: 0; position: absolute; pointer-events: none; font-size: clamp(2.5rem, 8vw, 4rem);
+            line-height: 1.2; font-weight: 900; letter-spacing: 0.05em; text-align: center;
+            width: 100%; left: 0; top: 50%; transform: translateY(-50%); z-index: 2;
+            color: #00ff00; text-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00, 0 0 15px #00ff00, 0 0 20px #00ff00, 0 0 35px #00ff00, 0 0 40px #00ff00;
+            animation: greenMatrixGlow 3s ease-in-out infinite alternate;
+        }
+        @keyframes greenMatrixGlow {
+            0% { text-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00, 0 0 15px #00ff00, 0 0 20px #00ff00, 0 0 35px #00ff00, 0 0 40px #00ff00; }
+            100% { text-shadow: 0 0 2px #00ff00, 0 0 5px #00ff00, 0 0 8px #00ff00, 0 0 12px #00ff00, 0 0 20px #00ff00, 0 0 25px #00ff00; }
+        }
+        .motion-title-sub {
+            margin-top: 0; font-size: clamp(1.2rem, 3vw, 1.8rem); font-weight: 700;
+            color: var(--fg); text-align: center; opacity: 0;
+            animation: fadeInMotionSub 3.5s forwards; animation-delay: 2.5s;
+            max-width: 600px; line-height: 1.5;
+        }
+        @keyframes fadeInMotionSub { from { opacity: 0; transform: translateY(24px);} to { opacity: 1; transform: translateY(0);} }
+        .course-reveal { padding: 15vh 0; text-align: center; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); background-color: #030303; }
+        .course-reveal h2 { font-size: clamp(3rem, 7vw, 5.5rem); font-weight: 900; color: var(--accent); text-transform: uppercase; letter-spacing: -0.02em; line-height: 1; }
+        .course-reveal .sub-heading { font-size: clamp(1.2rem, 3vw, 1.5rem); color: var(--muted); margin-top: 10px; margin-bottom: 60px; text-transform: uppercase; letter-spacing: 0.2em; font-weight: 700; }
+        .course-benefits { max-width: 650px; margin: 60px auto; text-align: left; }
+        .course-benefits h3 { font-size: clamp(1.3rem, 4vw, 1.8rem); margin-bottom: 30px; text-align: center; color: var(--fg); }
+        .course-benefits ul { list-style: none; padding: 0; }
+        .course-benefits li { display: flex; align-items: center; font-size: clamp(1rem, 2.5vw, 1.2rem); margin-bottom: 20px; color: var(--muted); font-weight: 400; line-height: 1.5; }
+        .course-benefits li svg { width: 24px; height: 24px; margin-right: 15px; flex-shrink: 0; color: var(--accent); }
+        .course-benefits li span { color: var(--fg); text-wrap: pretty; }
+        .price-box { margin-top: 60px; padding: 40px; background: #080808; border: 1px solid var(--border); border-radius: 12px; display: inline-block; text-align: center; }
+        .limited-time { font-size: clamp(1rem, 2.5vw, 1.2rem); color: #ff4444; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 15px; }
+        .original-price { font-size: clamp(1.5rem, 4vw, 2.5rem); color: var(--muted); text-decoration: line-through; margin-bottom: 10px; font-weight: 700; }
+        .price { font-size: clamp(3rem, 8vw, 6rem); font-weight: 900; color: var(--fg); }
+        .buy-button { display: inline-block; font-size: 1.5rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #000000; background: #ffffff; padding: 20px 60px; border: 2px solid #ffffff; text-decoration: none; margin-top: 20px; transition: all 0.3s ease; border-radius: 8px; cursor: pointer; }
+        .buy-button:hover { background: #e0e0e0; transform: scale(1.05); }
+        .final-cta { min-height: 80vh; display: flex; align-items: center; justify-content: center; text-align: center; }
+        .final-cta p { font-size: clamp(1.5rem, 4vw, 2.5rem); font-weight: 700; line-height: 1.5; color: var(--fg); max-width: 750px; text-wrap: pretty; }
+        .footer { padding: 50px 20px; text-align: center; border-top: 1px solid var(--border); }
+        .footer p { font-size: 0.8rem; color: var(--muted); max-width: 600px; margin: 0 auto; line-height: 1.6; }
+    </style>
+</head>
+<body>
+
+    <section class="hero container fade-in-section">
+        <div>
+            <h1 class="animated-title">
+                <span style="animation-delay: 0.2s">Ο,ΤΙ ΣΟΥ ΕΙΠΑΝ ΓΙΑ ΤΙΣ ΓΥΝΑΙΚΕΣ...</span>
+                <span class="line-break" style="animation-delay: 1.2s">ΕΙΝΑΙ ΨΕΜΑ.</span>
+            </h1>
+        </div>
+    </section>
+
+    <!-- ARCADE GAME SECTION -->
+    <section class="arcade-section fade-in-section">
+        <div class="arcade-machine">
+            <div class="arcade-header">
+                <h1 class="arcade-title">Seduction God</h1>
+                <p class="arcade-subtitle">Εκπαιδευση Γυναικας</p>
+            </div>
+
+            <div class="screen-container">
+                <canvas id="gameCanvas"></canvas>
+                <div class="scanlines"></div>
+                
+                <div class="overlay-element combo-display" id="comboDisplay">DOMINANCE x0</div>
+                <div class="overlay-element achievement-popup" id="achievementPopup"></div>
+            </div>
+
+            <div class="control-panel">
+                <div class="mastery-section">
+                    <div class="mastery-title" id="masteryTitle">ΣΚΟΥΛΙΚΙ</div>
+                    <div class="progress-container">
+                        <div class="progress-fill" id="masteryBar" style="width: 50%;"></div>
+                    </div>
+                </div>
+
+                <div class="stats-neon">
+                    <div class="stat-display score-stat">
+                        <div class="stat-label">DOMINANCE</div>
+                        <div class="stat-value" id="scoreValue">0</div>
+                    </div>
+                    <div class="stat-display level-stat">
+                        <div class="stat-label">LEVEL</div>
+                        <div class="stat-value" id="levelValue">1</div>
+                    </div>
+                    <div class="stat-display frame-stat">
+                        <div class="stat-label">ΤΣΑΜΠΟΥΚΑΣ</div>
+                        <div class="stat-value" id="frameValue">100%</div>
+                    </div>
+                </div>
+
+                <div class="controls-info">
+                    <strong>WASD/ΒΕΛΗ:</strong> ΚΥΝΗΓΙ &nbsp;•&nbsp; <strong>ΚΕΝΟ:</strong> ΚΥΡΙΑΡΧΙΑ &nbsp;•&nbsp; <strong>ΚΛΙΚ:</strong> ΕΝΑΡΞΗ ΚΑΤΑΚΤΗΣΗΣ
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="interstitial container fade-in-section"><p>Κοιτάς το κινητό σου. Περιμένεις. Η σιωπή της δεν είναι αδιαφορία. Είναι μήνυμα. Σημαίνει: 'Έχω καλύτερες επιλογές'. Σημαίνει ότι η δύναμη είναι δική της. Και κάθε δευτερόλεπτο που περιμένεις, <span class="reveal-text">της το&nbsp;επιβεβαιώνεις.</span></p></section>
+    <section class="interstitial container fade-in-section"><p>Τι θα γινόταν αν μπορούσες να κάνεις τη σιωπή να δουλεύει για&nbsp;εσένα; Αν κάθε λεπτό που *εσύ* δεν απαντάς, ο <span class="reveal-text">δικός της&nbsp;πανικός</span> μεγάλωνε;</p></section>
+    <section class="interstitial container fade-in-section"><p>Είσαι ο 'καλός φίλος'. Ο μοντέρνος ευνούχος της αυλής της. Σε εμπιστεύεται απόλυτα. Είσαι ασφαλής. Γιατί ξέρει ότι δεν αποτελείς καμία <span class="reveal-text">απειλή.</span></p></section>
+    <section class="interstitial container fade-in-section"><p>Υπάρχει ένας ψυχολογικός διακόπτης που μετατρέπει την 'ασφάλεια' σε 'αβεβαιότητα'. Και η αβεβαιότητα είναι το καύσιμο της εμμονής. <span class="reveal-text">Ξέρεις πού&nbsp;βρίσκεται;</span></p></section>
+    <section class="interstitial container fade-in-section"><p>Της ανοίγεις την ψυχή σου. Αυτή έρχεται σε εσένα για να γεμίσει. Είσαι το <span class="reveal-text">καύσιμο</span> που χρησιμοποιεί για να πάει να βρει&nbsp;εκείνον.</p></section>
+    <section class="persona-section fade-in-section"><div class="container"><p>«Σου έδωσαν έναν χάρτη για έναν κόσμο που δεν υπάρχει. Οι κανόνες είναι για τα πρόβατα. Εγώ θα σου δώσω κάτι πολύ πιο επικίνδυνο: Ένα νέο λειτουργικό σύστημα για το μυαλό σου. Θα σκέφτεσαι σαν <span class="reveal-text">κυνηγός.</span> Θα βλέπεις ευκαιρίες εκεί που οι άλλοι βλέπουν&nbsp;τοίχους.»</p></div></section>
+    <section class="persona-section fade-in-section"><div class="container"><p>Για μια δεκαετία, γύρισα τον κόσμο. Αντιμετώπισα χιλιάδες απορρίψεις που θα συνέτριβαν άλλους, και γιόρτασα χιλιάδες επιτυχίες με τις πιο όμορφες γυναίκες του πλανήτη. Αυτό δεν είναι θεωρία. Είναι η γνώση από το πεδίο της μάχης, συμπυκνωμένη για&nbsp;εσένα.</p></div></section>
+    <section class="persona-section fade-in-section" style="background-color: #030303; border-top: 1px solid #111; border-bottom: 1px solid #111;"><div class="container"><p>Αυτή η γνώση είναι επικίνδυνη. Είναι ένα όπλο που οι περισσότεροι άντρες δεν έχουν την ψυχική δύναμη να χειριστούν. Για αυτόν τον λόγο, η πρόσβαση θα είναι <span class="reveal-text">εξαιρετικά&nbsp;περιορισμένη.</span></p></div></section>
+    
+    <section class="motion-title-section fade-in-section">
+        <div class="motion-canvas-wrapper">
+            <canvas id="motion-title-canvas"></canvas>
+            <div class="motion-title-map" id="motion-title-map">
+                ΠΡΟΕΙΔΟΠΟΙΗΣΗ
+            </div>
+        </div>
+        <div class="motion-title-sub">
+            Αυτή η γνώση θα εξαφανιστεί.<br>
+            Η δική σου δειλία, όμως, θα μείνει για πάντα.
+        </div>
+    </section>
+
+    <section class="course-reveal container fade-in-section" id="course">
+        <h2>SEDUCTION GOD</h2>
+        <p class="sub-heading">Ο ΑΠΟΛΥΤΟΣ ΚΩΔΙΚΑΣ</p>
+        <div class="course-benefits">
+            <h3>Μέσα σε αυτόν τον κώδικα θα ανακαλύψεις:</h3>
+            <ul>
+                <li><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path><path d="m9 12 2 2 4-4"></path></svg><span>Πώς να μετατρέψεις την αδιαφορία της σε <strong>απόλυτη&nbsp;εμμονή.</strong></span></li>
+                <li><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path><path d="m9 12 2 2 4-4"></path></svg><span>Την ψυχολογία πίσω από τη γυναικεία επιθυμία για να γίνεις <strong>η φαντασίωση που δεν ήξερε ότι&nbsp;είχε.</strong></span></li>
+                <li><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path><path d="m9 12 2 2 4-4"></path></svg><span>Πώς να γίνεις η <strong>αδιαμφισβήτητη προτεραιότητά της</strong>, αφήνοντας τους άλλους&nbsp;πίσω.</span></li>
+                <li><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path><path d="m9 12 2 2 4-4"></path></svg><span>Τεχνικές για να <strong>κυριαρχείς στην επικοινωνία</strong> και να ορίζεις εσύ το παιχνίδι,&nbsp;πάντα.</span></li>
+            </ul>
+        </div>
+        <div class="price-box">
+            <div class="limited-time">ΠΕΡΙΟΡΙΣΜΕΝΗ ΠΡΟΣΦΟΡΑ</div>
+            <div class="original-price">€297</div>
+            <div class="price">€97</div>
+            <a href="https://5613144303252.gumroad.com/l/rqyym" target="_blank" class="buy-button">ΑΓΟΡΑ ΤΩΡΑ</a>
+        </div>
+    </section>
+    
+    <section class="final-cta container fade-in-section"><p>Η φύση σε έκανε να κυνηγάς. Η κοινωνία σε έκανε να φοβάσαι. Μπορείς να παραμείνεις το θήραμα, ή να γίνεις ο κυνηγός. Θεός ή έντομο. Πάτα ή θα σε πατήσουν.</p></section>
+    
+    <footer class="footer fade-in-section">
+        <p>Αυτό το προϊόν προορίζεται μόνο για εκπαιδευτικούς και ενημερωτικούς σκοπούς. Με την αγορά, συμφωνείτε με τους όρους και τις προϋποθέσεις μας.</p>
+    </footer>
+
+    <script>
+        // NEON SEDUCTION ARCADE GAME SCRIPT - BUG FIXES & ENHANCEMENTS
+        class NeonSeductionArcade {
+            constructor() {
+                this.canvas = document.getElementById('gameCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.animationFrameId = null;
+                this.achievementTimeout = null;
+                
+                this.width = 800;
+                this.height = 400;
+                this.isPerformanceHeavy = (navigator.hardwareConcurrency || 4) <= 4;
+
+                this.init();
+            }
+
+            setupCanvas() {
+                const scale = window.devicePixelRatio || 1;
+                this.canvas.width = this.width * scale;
+                this.canvas.height = this.height * scale;
+                this.canvas.style.width = '100%';
+                this.canvas.style.height = 'auto';
+                this.canvas.style.aspectRatio = `${this.width} / ${this.height}`;
+                this.ctx.scale(scale, scale);
+            }
+
+            init() {
+                this.setupCanvas();
+                this.setupInput();
+                this.resetGame();
+                this.gameLoop();
+                window.addEventListener('resize', () => this.setupCanvas());
+            }
+
+            setupInput() {
+                const keyMap = {
+                    'ArrowLeft': 'left', 'KeyA': 'left',
+                    'ArrowRight': 'right', 'KeyD': 'right',
+                    'ArrowUp': 'up', 'KeyW': 'up',
+                    'ArrowDown': 'down', 'KeyS': 'down',
+                    ' ': 'space', 'Space': 'space'
+                };
+                
+                const handleKeyEvent = (e, isDown) => {
+                    const action = keyMap[e.code] || keyMap[e.key];
+                    if (action) {
+                        e.preventDefault();
+                        this.input[action] = isDown;
+                        if (isDown && !this.running && !this.gameOver) this.startGame();
+                    }
+                };
+
+                document.addEventListener('keydown', (e) => handleKeyEvent(e, true));
+                document.addEventListener('keyup', (e) => handleKeyEvent(e, false));
+                
+                this.canvas.addEventListener('click', () => {
+                    if (!this.running || this.gameOver) this.startGame();
+                });
+            }
+
+            setupLevel() {
+                this.targets = [];
+                this.projectiles = [];
+                this.truthPills = [];
+                this.pillSpawnTimer = 400;
+
+                const archetypes = {
+                    feminist: { 
+                        name: "ΦΕΜΙΝΑΖΙ", color: '#ff00ff', speed: 1.3, points: 666, fireRate: 50,
+                        techniques: ["ΥΠΟΤΑΧΘΗΚΕ ΣΤΗΝ ΦΥΣΗ", "ΒΡΗΚΕ ΤΟΝ ΑΦΕΝΤΗ", "ΕΠΕΣΤΡΕΨΕ ΣΤΗΝ ΚΟΥΖΙΝΑ"]
+                    },
+                    onlyfans: { 
+                        name: "ONLYFANS THOT", color: '#ff0080', speed: 0.9, points: 420, fireRate: 80,
+                        techniques: ["Η ΘΕΣΗ ΤΗΣ", "ΚΥΡΙΑΡΧΙΑ. ΕΠΙΒΕΒΑΙΩΘΗΚΕ.", "ΑΠΟΛΥΤΗ ΥΠΟΤΑΓΗ"]
+                    },
+                    karen: { 
+                        name: "KAREN MANAGER", color: '#8000ff', speed: 1.1, points: 350, fireRate: 70,
+                        techniques: ["ΕΡΓΟΣΤΑΣΙΑΚΕΣ ΡΥΘΜΙΣΕΙΣ", "ΑΠΕΝΕΡΓΟΠΟΙΗΣΗ ΠΡΟΝΟΜΙΩΝ", "ΒΙΟΛΟΓΙΚΗ ΥΠΟΤΑΓΗ"]
+                    },
+                    zoomer: { 
+                        name: "ZOOMER GIRL", color: '#00ff80', speed: 1.5, points: 300, fireRate: 60,
+                        techniques: ["ΒΡΗΚΕ ΤΟΝ DADDY", "ΠΕΙΝΑ ΓΙΑ VALIDATION", "ΑΝΑΚΑΛΥΨΕ ΤΗΝ ΑΛΗΘΕΙΑ"]
+                    }
+                };
+
+                const archetypeList = Object.values(archetypes);
+                const targetCount = Math.min(2 + Math.floor(this.level / 2), 6);
+                
+                for (let i = 0; i < targetCount; i++) {
+                    const archetype = archetypeList[Math.floor(Math.random() * archetypeList.length)];
+                    this.targets.push(this.createTarget(archetype));
+                }
+            }
+
+            seduceTarget(target) {
+                target.seduced = true;
+                this.totalKillsInSession++;
+                
+                let points = target.archetype.points;
+                let multiplier = 1 + (this.combo * 0.2);
+                
+                if (this.frame > 80) multiplier *= 1.5;
+                
+                const critical = Math.random() < (0.15 + this.combo * 0.03);
+                if (critical) {
+                    multiplier *= 3;
+                    this.showMessage({ text: 'PSYCHO-DOMINATION!', x: target.x, y: target.y - 40, color: '#ffff00', scale: 2, life: 80, type: 'FLOAT' });
+                    this.screenShake = 20;
+                }
+
+                const finalPoints = Math.floor(points * multiplier);
+                this.score += finalPoints;
+                this.mastery = Math.min(100, this.mastery + 10);
+                this.combo++;
+                this.frame = Math.min(100, this.frame + 20);
+
+                const technique = target.archetype.techniques[Math.floor(Math.random() * target.archetype.techniques.length)];
+                this.showMessage({ text: technique, type: 'BANNER', color: '#ff00ff', scale: 1.5, life: 150 });
+                this.showMessage({ text: `+${finalPoints}`, x: target.x, y: target.y, color: '#00ff00', scale: 1.3, life: 80, type: 'FLOAT' });
+                
+                this.createNeonParticles(target.x, target.y, target.archetype.color, critical ? 40 : 25);
+                this.updateComboDisplay();
+                this.checkAchievements();
+            }
+
+            playerHit() {
+                if (this.playerHitCooldown > 0) return;
+
+                this.frame = Math.max(0, this.frame - 30);
+                this.mastery = Math.max(0, this.mastery - 10);
+                this.combo = 0;
+                this.player.stunTime = 60;
+                this.screenShake = 25;
+                this.playerHitCooldown = 30;
+                
+                const rejections = [
+                    'ΕΙΣΑΙ ΤΙΠΟΤΑ', 'ΓΕΝΕΤΙΚΟ ΛΑΘΟΣ', 'ΑΣΗΜΑΝΤΟΣ. ΑΝΙΚΑΝΟΣ.',
+                    'ΠΟΤΕ ΔΕΝ ΑΡΚΕΙΣ', 'ΑΞΙΖΕΙΣ ΤΗΝ ΑΠΟΡΡΙΨΗ', 'ΑΔΥΝΑΜΟ DNA',
+                    'ΕΙΣΑΙ ΠΟΛΥ ΚΟΝΤΟΣ', 'ΕΙΣΑΙ ΠΟΛΥ ΦΤΩΧΟΣ', 'ΔΕΝ ΕΙΣΑΙ ΔΙΑΣΗΜΟΣ',
+                    'ΕΙΣΑΙ ΑΠΛΑ ΦΙΛΟΣ', 'ΑΠΟΤΥΧΗΜΕΝΟ ΓΟΝΙΔΙΟ'
+                ];
+                
+                const rejection = rejections[Math.floor(Math.random() * rejections.length)];
+                this.showMessage({ text: rejection, type: 'ANNOUNCEMENT', color: '#ff0000', scale: 2.2, life: 120 });
+                this.createNeonParticles(this.player.x, this.player.y, '#ff0000', 30);
+                this.updateComboDisplay();
+            }
+
+            checkAchievements() {
+                const achievements = [
+                    { key: 'firstKill', condition: () => this.totalKillsInSession === 1, name: 'ΑΠΟΛΥΤΗ ΥΠΟΤΑΓΗ', desc: "Μάθε τα μυστικά για το πώς να κάνεις τα θηλυκά να τρέχουν από πίσω σου.", reward: 666 },
+                    { key: 'comboGod', condition: () => this.combo === 15, name: 'ΚΑΤΑΣΤΡΟΦΕΑΣ', desc: '15x combo', reward: 2500 },
+                    { key: 'alphaMale', condition: () => this.score >= 50000, name: 'ALPHA ΚΥΡΙΑΡΧΟΣ', desc: '50K Dominance', reward: 6969 },
+                    { key: 'misogynist', condition: () => this.level >= 10, name: 'ΤΟΞΙΚΗ ΑΡΡΕΝΩΠΟΤΗΤΑ', desc: 'Level 10', reward: 3333 },
+                    { key: 'blackpillGod', condition: () => this.godMode, name: 'ΜΕΣΣΙΑΣ ΤΟΥ ΜΑΥΡΟΥ ΧΑΠΙΟΥ', desc: 'God mode ενεργοποιήθηκε', reward: 13337 }
+                ];
+
+                achievements.forEach(achievement => {
+                    if (!this.achievements.has(achievement.key) && achievement.condition()) {
+                        this.unlockAchievement(achievement);
+                    }
+                });
+            }
+
+            unlockAchievement(achievement) {
+                this.achievements.add(achievement.key);
+                this.score += achievement.reward;
+                
+                const popup = document.getElementById('achievementPopup');
+                popup.innerHTML = `
+                    <div style="font-size: 3rem; margin-bottom: 15px;">🏆</div>
+                    <div style="font-size: 1.4rem; color: #ff00ff; margin-bottom: 8px; font-weight: 900;">${achievement.name}</div>
+                    <div style="font-size: 1rem; color: #00ffff; margin-bottom: 15px;">${achievement.desc}</div>
+                    <div style="font-size: 1.3rem; color: #00ff00; font-weight: 700;">+${achievement.reward} DOMINANCE</div>
+                `;
+                popup.classList.add('show');
+
+                if (this.achievementTimeout) clearTimeout(this.achievementTimeout);
+                this.achievementTimeout = setTimeout(() => popup.classList.remove('show'), 5000); // Increased duration for readability
+            }
+
+            createNeonParticles(x, y, color, count) {
+                const particleCount = this.isPerformanceHeavy ? Math.floor(count / 2) : count;
+                for (let i = 0; i < particleCount; i++) {
+                    this.particles.push({
+                        x, y,
+                        vx: (Math.random() - 0.5) * 12,
+                        vy: (Math.random() - 0.5) * 12,
+                        color,
+                        size: Math.random() * 4 + 2,
+                        life: 60,
+                        maxLife: 60
+                    });
+                }
+            }
+
+            showMessage(msg) {
+                const defaults = {
+                    id: Math.random(),
+                    x: this.width / 2,
+                    y: this.height / 2,
+                    life: 100,
+                    scale: 1,
+                    type: 'ANNOUNCEMENT'
+                };
+                
+                const message = { ...defaults, ...msg };
+                message.maxLife = message.life;
+
+                if (message.type === 'ANNOUNCEMENT' || message.type === 'BANNER') {
+                    this.messages = this.messages.filter(m => m.type !== message.type);
+                }
+                
+                this.messages.push(message);
+            }
+
+            updateUI() {
+                if (this.score !== this.lastScore) {
+                    document.getElementById('scoreValue').textContent = this.score.toLocaleString();
+                    this.lastScore = this.score;
+                }
+                if (this.level !== this.lastLevel) {
+                    document.getElementById('levelValue').textContent = this.level;
+                    this.lastLevel = this.level;
+                }
+                
+                const frameValue = Math.round(this.frame);
+                if (frameValue !== this.lastFrame) {
+                    document.getElementById('frameValue').textContent = frameValue + '%';
+                    this.lastFrame = frameValue;
+                }
+                
+                if (this.mastery !== this.lastMastery) {
+                    document.getElementById('masteryBar').style.width = `${this.mastery}%`;
+                    const masteryTitles = [
+                        { threshold: 0, title: "ΣΚΟΥΛΙΚΙ" },
+                        { threshold: 25, title: "SIMP" },
+                        { threshold: 50, title: "ΑΣΚΟΥΜΕΝΟΣ ALPHA" },
+                        { threshold: 75, title: "GIGA CHAD" },
+                        { threshold: 95, title: "NIKOS PELETIE" }
+                    ];
+                    
+                    let currentTitle = this.lastMasteryTitle;
+                    for (let i = masteryTitles.length - 1; i >= 0; i--) {
+                        if (this.mastery >= masteryTitles[i].threshold) {
+                            currentTitle = masteryTitles[i].title;
+                            break;
+                        }
+                    }
+
+                    if (currentTitle !== this.lastMasteryTitle) {
+                        document.getElementById('masteryTitle').textContent = currentTitle;
+                        this.lastMasteryTitle = currentTitle;
+                    }
+                    this.lastMastery = this.mastery;
+                }
+            }
+
+            render(timestamp) {
+                if (!this.lastRenderTime) this.lastRenderTime = timestamp;
+                
+                this.ctx.save();
+                
+                if (this.screenShake > 0) {
+                    const shakeX = (Math.random() - 0.5) * this.screenShake;
+                    const shakeY = (Math.random() - 0.5) * this.screenShake;
+                    this.ctx.translate(shakeX, shakeY);
+                    this.screenShake = Math.max(0, this.screenShake - 2);
+                }
+
+                const gradient = this.ctx.createRadialGradient(this.width / 2, this.height / 2, 0, this.width / 2, this.height / 2, this.width / 2);
+                gradient.addColorStop(0, '#001122');
+                gradient.addColorStop(0.5, '#000511');
+                gradient.addColorStop(1, '#000000');
+                this.ctx.fillStyle = gradient;
+                this.ctx.fillRect(0, 0, this.width, this.height);
+
+                this.ctx.strokeStyle = 'rgba(0, 255, 255, 0.1)';
+                this.ctx.lineWidth = 1;
+                for (let i = 0; i < this.width; i += 40) {
+                    this.ctx.beginPath(); this.ctx.moveTo(i, 0); this.ctx.lineTo(i, this.height); this.ctx.stroke();
+                }
+                for (let i = 0; i < this.height; i += 40) {
+                    this.ctx.beginPath(); this.ctx.moveTo(0, i); this.ctx.lineTo(this.width, i); this.ctx.stroke();
+                }
+
+                if (!this.running && !this.gameOver) {
+                    this.ctx.font = 'bold 22px Orbitron';
+                    this.ctx.fillStyle = '#00ff00';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.shadowColor = '#00ff00';
+                    this.ctx.shadowBlur = 20;
+                    this.ctx.fillText('ΠΑΤΗΣΤΕ ΓΙΑ ΝΑ ΞΕΚΙΝΗΣΕΙ Η ΚΥΡΙΑΡΧΙΑ', this.width / 2, this.height / 2);
+                    this.ctx.shadowBlur = 0;
+                    this.ctx.restore();
+                    return;
+                }
+
+                const playerColor = this.godMode ? '#ffff00' : (this.player.truthBoost > 0 ? '#ff0080' : '#00ffff');
+                const playerAlpha = this.player.stunTime > 0 ? 0.4 : 1;
+                
+                this.ctx.globalAlpha = playerAlpha;
+                this.ctx.strokeStyle = playerColor;
+                this.ctx.lineWidth = 4;
+                this.ctx.shadowColor = playerColor;
+                this.ctx.shadowBlur = 15;
+                
+                this.ctx.beginPath();
+                this.ctx.arc(this.player.x, this.player.y, this.player.size / 2, 0, Math.PI * 2);
+                this.ctx.stroke();
+                
+                this.ctx.beginPath();
+                this.ctx.moveTo(this.player.x + 8, this.player.y - 8);
+                this.ctx.lineTo(this.player.x + 18, this.player.y - 18);
+                this.ctx.lineTo(this.player.x + 18, this.player.y - 12);
+                this.ctx.moveTo(this.player.x + 18, this.player.y - 18);
+                this.ctx.lineTo(this.player.x + 12, this.player.y - 18);
+                this.ctx.stroke();
+                
+                this.ctx.shadowBlur = 0;
+                this.ctx.globalAlpha = 1;
+
+                this.targets.forEach(target => {
+                    if (target.seduced && this.godMode) {
+                        target.x += (this.player.x - target.x) * 0.04;
+                        target.y += (this.player.y - target.y) * 0.04;
+                        this.ctx.globalAlpha = 0.5;
+                    }
+                    
+                    if (!target.seduced) {
+                        const targetAlpha = target.stunTime > 0 ? 0.3 : 1;
+                        this.ctx.globalAlpha = targetAlpha;
+                        this.ctx.strokeStyle = target.archetype.color;
+                        this.ctx.lineWidth = 3;
+                        this.ctx.shadowColor = target.archetype.color;
+                        this.ctx.shadowBlur = 15;
+                        
+                        this.ctx.beginPath();
+                        this.ctx.arc(target.x, target.y - 3, target.size / 2.5, 0, Math.PI * 2);
+                        this.ctx.stroke();
+                        
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(target.x, target.y + 8);
+                        this.ctx.lineTo(target.x, target.y + 18);
+                        this.ctx.moveTo(target.x - 6, target.y + 13);
+                        this.ctx.lineTo(target.x + 6, target.y + 13);
+                        this.ctx.stroke();
+                        
+                        this.ctx.shadowBlur = 0;
+                        this.ctx.globalAlpha = 1;
+                    }
+                });
+
+                this.truthPills.forEach(pill => {
+                    this.ctx.fillStyle = '#ff0080'; this.ctx.shadowColor = '#ff0080'; this.ctx.shadowBlur = 25;
+                    this.ctx.beginPath(); this.ctx.ellipse(pill.x, pill.y, pill.size, pill.size * 0.6, 0, 0, Math.PI * 2); this.ctx.fill();
+                    this.ctx.shadowBlur = 0;
+                });
+
+                this.ctx.fillStyle = '#ff6666';
+                this.projectiles.forEach(proj => {
+                    this.ctx.beginPath(); this.ctx.arc(proj.x, proj.y, proj.size, 0, Math.PI * 2);
+                    this.ctx.fill();
+                });
+
+                this.particles.forEach(p => {
+                    this.ctx.globalAlpha = p.life / p.maxLife; this.ctx.fillStyle = p.color;
+                    this.ctx.beginPath(); this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); this.ctx.fill();
+                });
+                this.ctx.globalAlpha = 1;
+
+                this.negativeHits.forEach(hit => {
+                    const alpha = hit.life / hit.maxLife * 0.7;
+                    const radius = hit.radius * (1 - hit.life / hit.maxLife);
+                    this.ctx.strokeStyle = `rgba(255, 255, 0, ${alpha})`; this.ctx.lineWidth = 3;
+                    this.ctx.beginPath(); this.ctx.arc(hit.x, hit.y, radius, 0, Math.PI * 2); this.ctx.stroke();
+                });
+
+                this.renderMessages();
+                if (this.gameOver) this.renderGameOver();
+                this.ctx.restore();
+                this.lastRenderTime = timestamp;
+            }
+            
+            renderGameOver() {
+                const getFadeInAlpha = (start, duration) => Math.min(1, Math.max(0, this.gameOverTimer - start) / duration);
+                this.ctx.globalAlpha = getFadeInAlpha(0, 30);
+                this.ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+                this.ctx.fillRect(0, 0, this.width, this.height);
+                this.ctx.textAlign = 'center';
+                
+                this.ctx.globalAlpha = getFadeInAlpha(30, 60);
+                this.ctx.font = 'bold 32px Orbitron'; this.ctx.fillStyle = '#ff0000'; this.ctx.shadowColor = '#ff0000'; this.ctx.shadowBlur = 20;
+                this.ctx.fillText('GAME OVER', this.width / 2, this.height * 0.25);
+                
+                this.ctx.globalAlpha = getFadeInAlpha(90, 60);
+                this.ctx.font = '18px Orbitron'; this.ctx.fillStyle = '#cccccc'; this.ctx.shadowBlur = 0;
+                this.ctx.fillText('ΑΠΕΤΥΧΕΣ. ΟΠΩΣ ΚΑΙ ΣΤΗΝ ΑΛΗΘΙΝΗ ΖΩΗ.', this.width / 2, this.height * 0.4);
+                
+                this.ctx.globalAlpha = getFadeInAlpha(150, 60);
+                this.ctx.font = 'bold 18px Orbitron'; this.ctx.fillStyle = '#ff00ff';
+                this.ctx.fillText('ΤΟ ΠΑΙΧΝΙΔΙ ΕΙΝΑΙ ΣΤΗΜΕΝΟ. ΕΚΤΟΣ ΑΝ ΞΕΡΕΙΣ ΤΟΥΣ ΚΩΔΙΚΟΥΣ.', this.width / 2, this.height * 0.5);
+                
+                this.ctx.globalAlpha = getFadeInAlpha(210, 60);
+                this.ctx.font = 'bold 26px Orbitron'; this.ctx.fillStyle = '#00ffff'; this.ctx.shadowColor = '#00ffff'; this.ctx.shadowBlur = 15;
+                this.ctx.fillText('Seduction God Course', this.width / 2, this.height * 0.65);
+                
+                this.ctx.globalAlpha = getFadeInAlpha(270, 60);
+                this.ctx.font = 'bold 20px Orbitron'; this.ctx.fillStyle = '#ffff00'; this.ctx.shadowColor = '#ffff00'; this.ctx.shadowBlur = 10;
+                this.ctx.fillText('Η ΑΠΑΓΟΡΕΥΜΕΝΗ ΓΝΩΣΗ.', this.width / 2, this.height * 0.75);
+                this.ctx.globalAlpha = 1;
+            }
+
+            renderMessages() {
+                let floatTextOffsets = new Map();
+                this.messages.forEach(msg => {
+                    this.ctx.globalAlpha = msg.life / msg.maxLife; this.ctx.font = `bold ${12 * msg.scale}px Orbitron`;
+                    this.ctx.textAlign = 'center';
+                    let x = msg.x, y = msg.y;
+                    if (msg.type === 'BANNER') y = this.height - 20;
+                    else if (msg.type === 'ANNOUNCEMENT') y = 40;
+                    else if (msg.type === 'FLOAT') { 
+                        const offset = floatTextOffsets.get(msg.x) || 0;
+                        y -= offset; floatTextOffsets.set(msg.x, offset + 20);
+                    }
+                    const textWidth = this.ctx.measureText(msg.text).width;
+                    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+                    this.ctx.fillRect(x - textWidth / 2 - 5, y - 14 * msg.scale + 2, textWidth + 10, 16 * msg.scale);
+                    this.ctx.fillStyle = msg.color; this.ctx.fillText(msg.text, x, y);
+                });
+                this.ctx.globalAlpha = 1;
+            }
+
+            createTarget(archetype) {
+                return {
+                    x: Math.random() * (this.width - 50) + 25, y: Math.random() * (this.height - 50) + 25,
+                    vx: (Math.random() - 0.5) * 2, vy: (Math.random() - 0.5) * 2, size: 20, archetype,
+                    seduced: false, fireCooldown: archetype.fireRate, stunTime: 0, wanderTimer: 0
+                };
+            }
+
+            createProjectile(x, y, angle, speed) {
+                return { x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, size: 5, life: 200, active: true };
+            }
+
+            collectTruthPill(pill) {
+                pill.active = false; this.player.truthBoost = 240;
+                this.frame = Math.min(100, this.frame + 40);
+                this.showMessage({ text: 'Η ΑΛΗΘΕΙΑ ΣΕ ΑΠΕΛΕΥΘΕΡΩΣΕ!', type: 'ANNOUNCEMENT', color: '#ff0080', scale: 2.5, life: 120 });
+                this.createNeonParticles(pill.x, pill.y, '#ff0080', 60); this.screenShake = 30;
+            }
+
+            updateComboDisplay() {
+                const display = document.getElementById('comboDisplay');
+                if (this.combo > 1) { display.textContent = `DOMINANCE x${this.combo}`; display.classList.add('active'); } 
+                else { display.classList.remove('active'); }
+            }
+
+            update() {
+                if (this.player.stunTime > 0) this.player.stunTime--;
+                if (this.player.truthBoost > 0) this.player.truthBoost--;
+                if (this.playerHitCooldown > 0) this.playerHitCooldown--;
+                if (this.spacebarCooldown > 0) this.spacebarCooldown--;
+
+                let dx = 0, dy = 0;
+                if (this.input.left) dx -= 1; if (this.input.right) dx += 1;
+                if (this.input.up) dy -= 1; if (this.input.down) dy += 1;
+
+                if (dx !== 0 || dy !== 0) {
+                    const length = Math.sqrt(dx * dx + dy * dy);
+                    const speed = this.godMode ? 9 : 6 + (this.combo * 0.1);
+                    this.player.x += (dx / length) * speed;
+                    this.player.y += (dy / length) * speed;
+                }
+
+                this.player.x = Math.max(15, Math.min(this.width - 15, this.player.x));
+                this.player.y = Math.max(15, Math.min(this.height - 15, this.player.y));
+
+                this.targets.forEach(target => {
+                    if (target.seduced || target.stunTime > 0) { if (target.stunTime > 0) target.stunTime--; return; }
+                    target.wanderTimer--;
+                    if (target.wanderTimer <= 0) {
+                        target.vx = (Math.random() - 0.5) * 3; target.vy = (Math.random() - 0.5) * 3;
+                        target.wanderTimer = Math.random() * 120 + 60;
+                    }
+                    target.x += target.vx * target.archetype.speed; target.y += target.vy * target.archetype.speed;
+                    if (target.x <= 15 || target.x >= this.width - 15) target.vx *= -1;
+                    if (target.y <= 15 || target.y >= this.height - 15) target.vy *= -1;
+                    
+                    target.fireCooldown--;
+                    if (target.fireCooldown <= 0 && !this.godMode) {
+                        const angle = Math.atan2(this.player.y - target.y, this.player.x - target.x);
+                        this.projectiles.push(this.createProjectile(target.x, target.y, angle, 3.5 + this.level * 0.3));
+                        // BUG FIX: Ensure fire rate scales correctly and never stops.
+                        const baseFireRate = target.archetype.fireRate;
+                        const scaledFireRate = baseFireRate / (1 + this.level * 0.1);
+                        target.fireCooldown = Math.max(10, scaledFireRate); // Set a minimum cooldown of 10 frames
+                    }
+                });
+                
+                this.projectiles = this.projectiles.filter(p => p.active && p.life-- > 0 && p.x > 0 && p.x < this.width && p.y > 0 && p.y < this.height);
+                this.projectiles.forEach(p => { p.x += p.vx; p.y += p.vy; });
+                this.particles = this.particles.filter(p => p.life-- > 0);
+                this.particles.forEach(p => { p.x += p.vx; p.y += p.vy; p.vx *= 0.92; p.vy *= 0.92; });
+                this.messages = this.messages.filter(m => m.life-- > 0);
+                this.messages.forEach(m => { if(m.type === 'FLOAT') m.y -= 0.5; });
+                this.negativeHits = this.negativeHits.filter(h => h.life-- > 0);
+                this.negativeHits.forEach(h => { this.targets.forEach(t => { if (!t.seduced && Math.hypot(h.x - t.x, h.y - t.y) < h.radius) t.stunTime = 80; }); });
+                this.truthPills = this.truthPills.filter(p => p.active && p.life-- > 0);
+
+                if (this.input.space && this.spacebarCooldown === 0) {
+                    this.negativeHits.push({ x: this.player.x, y: this.player.y, radius: 100, life: 25 });
+                    this.spacebarCooldown = 30;
+                }
+
+                if (!this.godMode && this.player.truthBoost <= 0) {
+                    this.projectiles.forEach(proj => {
+                        if (proj.active && Math.hypot(this.player.x - proj.x, this.player.y - proj.y) < this.player.size / 2 + proj.size) {
+                            proj.active = false; this.playerHit();
+                        }
+                    });
+                }
+
+                this.targets.forEach(t => { if (!t.seduced && Math.hypot(this.player.x - t.x, this.player.y - t.y) < this.player.size / 2 + t.size / 2) {
+                    this.seduceTarget(t); 
+                }});
+                this.truthPills.forEach(p => { if (p.active && Math.hypot(this.player.x - p.x, this.player.y - p.y) < this.player.size / 2 + p.size) this.collectTruthPill(p); });
+
+                if (!this.godMode) this.frame = Math.max(0, this.frame - (0.025 * (1 + this.level * 0.1)));
+
+                if (this.targets.length > 0 && this.targets.every(t => t.seduced)) {
+                    this.levelUp();
+                } else if (this.frame <= 0) {
+                    this.triggerGameOver();
+                }
+
+                // BUG FIX: Only trigger God Mode if mastery reaches 100 during a level.
+                if (this.mastery >= 100 && !this.godMode && !this.godModeTriggeredThisLevel) {
+                    this.triggerGodMode();
+                }
+
+                this.updateUI(); this.updateTaunts();
+            }
+
+            updateTaunts() {
+                if (this.godMode) return;
+                this.tauntTimer--;
+                if (this.tauntTimer <= 0) {
+                    const taunts = ['ΣΕ ΒΛΕΠΕΙ ΦΙΛΟ', 'ΣΚΕΦΤΕΤΑΙ ΤΟΝ ΠΡΩΗΝ', 'ΔΕΝ ΕΧΕΙΣ ΑΞΙΑ', 'ΕΙΣΑΙ ΑΝΤΙΚΑΤΑΣΤΑΣΙΜΟΣ', 'ΓΕΛΑΕΙ ΜΑΖΙ ΣΟΥ', 'ΔΕΝ ΕΙΣΑΙ ALPHA', 'ΧΡΕΙΑΖΕΣΑΙ ΠΕΡΙΣΣΟΤΕΡΑ ΛΕΦΤΑ', 'ΔΕΝ ΕΙΣΑΙ ΑΡΚΕΤΟΣ', 'ΠΟΤΕ ΔΕΝ ΘΑ\'ΣΑΙ'];
+                    this.showMessage({ text: taunts[Math.floor(Math.random() * taunts.length)], x: Math.random() * (this.width - 200) + 100, y: Math.random() * (this.height - 100) + 50, color: '#ff4444', scale: 1.2, life: 120, type: 'TAUNT' });
+                    this.tauntTimer = 200 + Math.random() * 200;
+                }
+            }
+
+            triggerGodMode() {
+                this.godMode = true;
+                this.godModeTriggeredThisLevel = true;
+                this.showMessage({ text: 'GIGACHAD MODE!', type: 'ANNOUNCEMENT', color: '#ffff00', scale: 3, life: 180 });
+                this.showMessage({ text: 'Η ΠΡΑΓΜΑΤΙΚΟΤΗΤΑ ΕΙΝΑΙ Η ΠΑΙΔΙΚΗ ΣΟΥ ΧΑΡΑ!', type: 'BANNER', color: '#ff00ff', scale: 2, life: 180 });
+                this.frame = 100; this.projectiles = []; this.checkAchievements();
+            }
+
+            levelUp() {
+                this.level++; 
+                this.godModeTriggeredThisLevel = false; // Reset god mode trigger for new level
+                this.messages = []; 
+                this.setupLevel();
+                this.showMessage({ text: `LEVEL ${this.level} ALPHA`, type: 'ANNOUNCEMENT', color: '#00ff00', scale: 2.5, life: 120 });
+            }
+
+            triggerGameOver() {
+                if(this.gameOver) return;
+                this.running = false; this.gameOver = true; this.gameOverTimer = 0;
+                this.projectiles = []; this.messages = [];
+            }
+
+            gameLoop(timestamp) {
+                try {
+                    if (this.running) this.update();
+                    if (this.gameOver) this.gameOverTimer++;
+                    this.render(timestamp);
+                } catch (e) {
+                    console.error("Error in game loop:", e);
+                    if (this.animationFrameId) cancelAnimationFrame(this.animationFrameId);
+                    this.ctx.fillStyle = 'red'; this.ctx.font = '20px Orbitron'; this.ctx.textAlign = 'center';
+                    this.ctx.fillText('A FATAL ERROR OCCURRED. PLEASE REFRESH.', this.width / 2, this.height / 2);
+                    return;
+                }
+                this.animationFrameId = requestAnimationFrame((ts) => this.gameLoop(ts));
+            }
+
+            startGame() {
+                if (this.gameOver) this.resetGame();
+                this.running = true;
+                this.lastRenderTime = performance.now();
+                if (!this.animationFrameId) {
+                    this.gameLoop(this.lastRenderTime);
+                }
+            }
+
+            resetGame() {
+                if(this.animationFrameId) {
+                    cancelAnimationFrame(this.animationFrameId);
+                    this.animationFrameId = null;
+                }
+                this.running = false; this.gameOver = false; this.godMode = false; this.godModeTriggeredThisLevel = false;
+                this.score = 0; this.level = 1; this.frame = 100; this.mastery = 0;
+                this.combo = 0; this.screenShake = 0; this.gameOverTimer = 0; this.totalKillsInSession = 0;
+                this.lastScore = -1; this.lastLevel = -1; this.lastFrame = -1;
+                this.lastMastery = -1; this.lastMasteryTitle = '';
+                this.player = { x: this.width / 2, y: this.height / 2, size: 24, stunTime: 0, truthBoost: 0 };
+                this.targets = []; this.projectiles = []; this.particles = [];
+                this.messages = []; this.negativeHits = []; this.truthPills = [];
+                this.achievements = new Set();
+                this.input = { left: false, right: false, up: false, down: false, space: false };
+                if (this.achievementTimeout) clearTimeout(this.achievementTimeout);
+                this.setupLevel(); this.updateUI();
+                this.render(); // Initial render for start screen
+            }
+        }
+        
+        // ANIMATIONS AND SETUP
+        function setupAnimations() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) entry.target.classList.add('is-visible');
+                });
+            }, { threshold: 0.1 });
+            document.querySelectorAll('.fade-in-section').forEach(el => observer.observe(el));
+
+            const revealObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) setTimeout(() => entry.target.classList.add('is-revealed'), 800);
+                });
+            }, { threshold: 0.8 });
+            document.querySelectorAll('.reveal-text').forEach(el => revealObserver.observe(el));
+        }
+
+        function setupMotionTitle() {
+            const canvas = document.getElementById('motion-title-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const map = document.getElementById('motion-title-map');
+            
+            function resizeCanvas() {
+                const rect = canvas.getBoundingClientRect();
+                canvas.width = rect.width * devicePixelRatio; canvas.height = rect.height * devicePixelRatio;
+                canvas.style.width = rect.width + 'px'; canvas.style.height = rect.height + 'px';
+                ctx.scale(devicePixelRatio, devicePixelRatio);
+            }
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+
+            const matrixChars = 'ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ01';
+            const fontSize = 14;
+            const columns = Math.floor(canvas.width / devicePixelRatio / fontSize);
+            const drops = Array(columns).fill(1);
+
+            function drawGreenMatrix() {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.04)';
+                ctx.fillRect(0, 0, canvas.width / devicePixelRatio, canvas.height / devicePixelRatio);
+                ctx.fillStyle = '#00ff00'; ctx.font = fontSize + 'px monospace'; ctx.shadowColor = '#00ff00'; ctx.shadowBlur = 5;
+                for (let i = 0; i < drops.length; i++) {
+                    const text = matrixChars[Math.floor(Math.random() * matrixChars.length)];
+                    ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                    if (drops[i] * fontSize > canvas.height / devicePixelRatio && Math.random() > 0.975) drops[i] = 0;
+                    drops[i]++;
+                }
+                ctx.shadowBlur = 0;
+            }
+
+            let matrixInterval = setInterval(drawGreenMatrix, 35);
+            setTimeout(() => map.style.opacity = '1', 1000);
+            window.addEventListener('beforeunload', () => clearInterval(matrixInterval));
+        }
+
+        // INITIALIZE
+        document.addEventListener('DOMContentLoaded', () => {
+            new NeonSeductionArcade();
+            setupAnimations();
+            setupMotionTitle();
+        });
+    </script>
+</body>
+</html>
