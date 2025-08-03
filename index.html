@@ -156,6 +156,65 @@
         .achievement-popup.show { opacity: 1; transform: translate(-50%, -50%) scale(1); animation: achievementPulse 0.5s ease-in-out; }
         @keyframes achievementPulse { 0%, 100% { transform: translate(-50%, -50%) scale(1); } 50% { transform: translate(-50%, -50%) scale(1.05); } }
         
+        /* MOBILE CONTROLS */
+        .mobile-controls {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            right: 15px;
+            display: none; /* Hidden by default, shown via media query */
+            justify-content: space-between;
+            align-items: flex-end;
+            z-index: 20;
+            pointer-events: none; /* Container doesn't block clicks */
+        }
+        /* Show controls on touch devices */
+        @media (hover: none) and (pointer: coarse) {
+            .mobile-controls {
+                display: flex;
+            }
+        }
+        .d-pad {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            pointer-events: auto; /* Buttons are interactive */
+        }
+        .d-pad-btn {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: rgba(0, 255, 255, 0.2);
+            border: 1px solid #00ffff;
+            color: #00ffff;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .d-pad-btn.up { top: 0; left: 40px; border-radius: 5px 5px 0 0;}
+        .d-pad-btn.down { bottom: 0; left: 40px; border-radius: 0 0 5px 5px;}
+        .d-pad-btn.left { top: 40px; left: 0; border-radius: 5px 0 0 5px;}
+        .d-pad-btn.right { top: 40px; right: 0; border-radius: 0 5px 5px 0;}
+        .action-buttons {
+            pointer-events: auto; /* Buttons are interactive */
+        }
+        .action-btn {
+            width: 100px;
+            height: 60px;
+            background: rgba(255, 0, 255, 0.2);
+            border: 1px solid #ff00ff;
+            color: #ff00ff;
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            font-size: 14px;
+            border-radius: 10px;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
         /* RESPONSIVE */
         @media (max-width: 768px) {
             .arcade-title { font-size: 2rem; }
@@ -248,6 +307,18 @@
                 
                 <div class="overlay-element combo-display" id="comboDisplay">DOMINANCE x0</div>
                 <div class="overlay-element achievement-popup" id="achievementPopup"></div>
+
+                <div class="mobile-controls">
+                    <div class="d-pad">
+                        <button id="upBtn" class="d-pad-btn up">▲</button>
+                        <button id="leftBtn" class="d-pad-btn left">◄</button>
+                        <button id="rightBtn" class="d-pad-btn right">►</button>
+                        <button id="downBtn" class="d-pad-btn down">▼</button>
+                    </div>
+                    <div class="action-buttons">
+                        <button id="actionBtn" class="action-btn">ΚΥΡΙΑΡΧΙΑ</button>
+                    </div>
+                </div>
             </div>
 
             <div class="control-panel">
@@ -386,6 +457,29 @@
                 this.canvas.addEventListener('click', () => {
                     if (!this.running || this.gameOver) this.startGame();
                 });
+
+                // Mobile controls
+                const mobileButtonSetup = (id, action) => {
+                    const button = document.getElementById(id);
+                    if (button) {
+                        const setAction = (isDown) => {
+                            this.input[action] = isDown;
+                            if (isDown && !this.running && !this.gameOver) this.startGame();
+                        };
+                        button.addEventListener('touchstart', (e) => { e.preventDefault(); setAction(true); }, { passive: false });
+                        button.addEventListener('touchend', (e) => { e.preventDefault(); setAction(false); });
+                        button.addEventListener('touchcancel', (e) => { e.preventDefault(); setAction(false); });
+                        button.addEventListener('mousedown', (e) => { e.preventDefault(); setAction(true); });
+                        button.addEventListener('mouseup', (e) => { e.preventDefault(); setAction(false); });
+                        button.addEventListener('mouseleave', (e) => { e.preventDefault(); setAction(false); });
+                    }
+                };
+                
+                mobileButtonSetup('upBtn', 'up');
+                mobileButtonSetup('downBtn', 'down');
+                mobileButtonSetup('leftBtn', 'left');
+                mobileButtonSetup('rightBtn', 'right');
+                mobileButtonSetup('actionBtn', 'space');
             }
 
             setupLevel() {
@@ -478,8 +572,8 @@
 
             checkAchievements() {
                 const achievements = [
-                    { key: 'firstKill', condition: () => this.totalKillsInSession === 1, name: 'ΑΠΟΛΥΤΗ ΥΠΟΤΑΓΗ', desc: "Μάθε τα μυστικά για το πώς να κάνεις τα θηλυκά να τρέχουν από πίσω σου.", reward: 666 },
-                    { key: 'comboGod', condition: () => this.combo === 15, name: 'ΚΑΤΑΣΤΡΟΦΕΑΣ', desc: '15x combo', reward: 2500 },
+                    { key: 'firstKill', condition: () => this.totalKillsInSession >= 1, name: 'ΑΠΟΛΥΤΗ ΥΠΟΤΑΓΗ', desc: "Μάθε τα μυστικά για το πώς να κάνεις τα θηλυκά να τρέχουν από πίσω σου.", reward: 666 },
+                    { key: 'comboGod', condition: () => this.combo >= 15, name: 'ΚΑΤΑΣΤΡΟΦΕΑΣ', desc: '15x combo', reward: 2500 },
                     { key: 'alphaMale', condition: () => this.score >= 50000, name: 'ALPHA ΚΥΡΙΑΡΧΟΣ', desc: '50K Dominance', reward: 6969 },
                     { key: 'misogynist', condition: () => this.level >= 10, name: 'ΤΟΞΙΚΗ ΑΡΡΕΝΩΠΟΤΗΤΑ', desc: 'Level 10', reward: 3333 },
                     { key: 'blackpillGod', condition: () => this.godMode, name: 'ΜΕΣΣΙΑΣ ΤΟΥ ΜΑΥΡΟΥ ΧΑΠΙΟΥ', desc: 'God mode ενεργοποιήθηκε', reward: 13337 }
@@ -497,29 +591,37 @@
                 this.score += achievement.reward;
                 
                 const popup = document.getElementById('achievementPopup');
+                if (!popup) return;
+
                 popup.innerHTML = `
                     <div style="font-size: 3rem; margin-bottom: 15px;">🏆</div>
                     <div style="font-size: 1.4rem; color: #ff00ff; margin-bottom: 8px; font-weight: 900;">${achievement.name}</div>
                     <div style="font-size: 1rem; color: #00ffff; margin-bottom: 15px;">${achievement.desc}</div>
                     <div style="font-size: 1.3rem; color: #00ff00; font-weight: 700;">+${achievement.reward} DOMINANCE</div>
                 `;
-                popup.classList.add('show');
+                
+                if (this.achievementTimeout) {
+                    clearTimeout(this.achievementTimeout);
+                }
 
-                if (this.achievementTimeout) clearTimeout(this.achievementTimeout);
-                this.achievementTimeout = setTimeout(() => popup.classList.remove('show'), 5000); // Increased duration for readability
+                popup.classList.add('show');
+                this.achievementTimeout = setTimeout(() => {
+                    popup.classList.remove('show');
+                }, 3000);
             }
 
             createNeonParticles(x, y, color, count) {
                 const particleCount = this.isPerformanceHeavy ? Math.floor(count / 2) : count;
                 for (let i = 0; i < particleCount; i++) {
+                    const life = Math.random() * 40 + 20;
                     this.particles.push({
                         x, y,
                         vx: (Math.random() - 0.5) * 12,
                         vy: (Math.random() - 0.5) * 12,
                         color,
                         size: Math.random() * 4 + 2,
-                        life: 60,
-                        maxLife: 60
+                        life: life,
+                        maxLife: life
                     });
                 }
             }
@@ -675,6 +777,14 @@
                         this.ctx.moveTo(target.x - 6, target.y + 13);
                         this.ctx.lineTo(target.x + 6, target.y + 13);
                         this.ctx.stroke();
+
+                        // Render taunt message
+                        if (target.taunt.text && target.taunt.life > 0) {
+                            this.ctx.font = 'bold 14px Orbitron';
+                            this.ctx.textAlign = 'center';
+                            this.ctx.fillStyle = `rgba(255, 68, 68, ${target.taunt.life / target.taunt.maxLife})`;
+                            this.ctx.fillText(target.taunt.text, target.x, target.y - 20);
+                        }
                         
                         this.ctx.shadowBlur = 0;
                         this.ctx.globalAlpha = 1;
@@ -765,7 +875,8 @@
                 return {
                     x: Math.random() * (this.width - 50) + 25, y: Math.random() * (this.height - 50) + 25,
                     vx: (Math.random() - 0.5) * 2, vy: (Math.random() - 0.5) * 2, size: 20, archetype,
-                    seduced: false, fireCooldown: archetype.fireRate, stunTime: 0, wanderTimer: 0
+                    seduced: false, fireCooldown: archetype.fireRate, stunTime: 0, wanderTimer: 0,
+                    taunt: { text: '', life: 0, maxLife: 150 }, tauntCooldown: Math.random() * 200 + 100
                 };
             }
 
@@ -787,6 +898,8 @@
             }
 
             update() {
+                if (!this.running || this.gameOver) return;
+
                 if (this.player.stunTime > 0) this.player.stunTime--;
                 if (this.player.truthBoost > 0) this.player.truthBoost--;
                 if (this.playerHitCooldown > 0) this.playerHitCooldown--;
@@ -807,7 +920,13 @@
                 this.player.y = Math.max(15, Math.min(this.height - 15, this.player.y));
 
                 this.targets.forEach(target => {
-                    if (target.seduced || target.stunTime > 0) { if (target.stunTime > 0) target.stunTime--; return; }
+                    if (target.seduced || target.stunTime > 0) { 
+                        if (target.stunTime > 0) target.stunTime--;
+                        return; 
+                    }
+                    
+                    this.updateTargetTaunt(target);
+                    
                     target.wanderTimer--;
                     if (target.wanderTimer <= 0) {
                         target.vx = (Math.random() - 0.5) * 3; target.vy = (Math.random() - 0.5) * 3;
@@ -821,10 +940,9 @@
                     if (target.fireCooldown <= 0 && !this.godMode) {
                         const angle = Math.atan2(this.player.y - target.y, this.player.x - target.x);
                         this.projectiles.push(this.createProjectile(target.x, target.y, angle, 3.5 + this.level * 0.3));
-                        // BUG FIX: Ensure fire rate scales correctly and never stops.
                         const baseFireRate = target.archetype.fireRate;
                         const scaledFireRate = baseFireRate / (1 + this.level * 0.1);
-                        target.fireCooldown = Math.max(10, scaledFireRate); // Set a minimum cooldown of 10 frames
+                        target.fireCooldown = Math.max(10, scaledFireRate);
                     }
                 });
                 
@@ -864,21 +982,28 @@
                     this.triggerGameOver();
                 }
 
-                // BUG FIX: Only trigger God Mode if mastery reaches 100 during a level.
                 if (this.mastery >= 100 && !this.godMode && !this.godModeTriggeredThisLevel) {
                     this.triggerGodMode();
                 }
 
-                this.updateUI(); this.updateTaunts();
+                this.updateUI();
             }
 
-            updateTaunts() {
-                if (this.godMode) return;
-                this.tauntTimer--;
-                if (this.tauntTimer <= 0) {
-                    const taunts = ['ΣΕ ΒΛΕΠΕΙ ΦΙΛΟ', 'ΣΚΕΦΤΕΤΑΙ ΤΟΝ ΠΡΩΗΝ', 'ΔΕΝ ΕΧΕΙΣ ΑΞΙΑ', 'ΕΙΣΑΙ ΑΝΤΙΚΑΤΑΣΤΑΣΙΜΟΣ', 'ΓΕΛΑΕΙ ΜΑΖΙ ΣΟΥ', 'ΔΕΝ ΕΙΣΑΙ ALPHA', 'ΧΡΕΙΑΖΕΣΑΙ ΠΕΡΙΣΣΟΤΕΡΑ ΛΕΦΤΑ', 'ΔΕΝ ΕΙΣΑΙ ΑΡΚΕΤΟΣ', 'ΠΟΤΕ ΔΕΝ ΘΑ\'ΣΑΙ'];
-                    this.showMessage({ text: taunts[Math.floor(Math.random() * taunts.length)], x: Math.random() * (this.width - 200) + 100, y: Math.random() * (this.height - 100) + 50, color: '#ff4444', scale: 1.2, life: 120, type: 'TAUNT' });
-                    this.tauntTimer = 200 + Math.random() * 200;
+            updateTargetTaunt(target) {
+                if (target.taunt.life > 0) {
+                    target.taunt.life--;
+                }
+                target.tauntCooldown--;
+                if (target.tauntCooldown <= 0) {
+                    const taunts = [
+                        "Δεν είσαι πλούσιος", 
+                        "Έχεις μικρό πουλί", 
+                        "Δεν έχεις κοιλιακούς", 
+                        "Δεν είσαι ο Νίκος Πελετιέ"
+                    ];
+                    target.taunt.text = taunts[Math.floor(Math.random() * taunts.length)];
+                    target.taunt.life = target.taunt.maxLife;
+                    target.tauntCooldown = 200 + Math.random() * 200;
                 }
             }
 
@@ -892,7 +1017,8 @@
 
             levelUp() {
                 this.level++; 
-                this.godModeTriggeredThisLevel = false; // Reset god mode trigger for new level
+                this.godMode = false;
+                this.godModeTriggeredThisLevel = false;
                 this.messages = []; 
                 this.setupLevel();
                 this.showMessage({ text: `LEVEL ${this.level} ALPHA`, type: 'ANNOUNCEMENT', color: '#00ff00', scale: 2.5, life: 120 });
@@ -943,9 +1069,15 @@
                 this.messages = []; this.negativeHits = []; this.truthPills = [];
                 this.achievements = new Set();
                 this.input = { left: false, right: false, up: false, down: false, space: false };
-                if (this.achievementTimeout) clearTimeout(this.achievementTimeout);
+                if (this.achievementTimeout) {
+                    clearTimeout(this.achievementTimeout);
+                    this.achievementTimeout = null;
+                }
+                const popup = document.getElementById('achievementPopup');
+                if (popup) popup.classList.remove('show');
+
                 this.setupLevel(); this.updateUI();
-                this.render(); // Initial render for start screen
+                this.render();
             }
         }
         
