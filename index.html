@@ -3,12 +3,10 @@
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <meta http-equiv="Content-Style-Type" content="text/css">
-  <title>Seduction God - Ο Κώδικας</title>
-  <meta name="Description" content="Ανακάλυψε τον απόλυτο κώδικα της αποπλάνησης. Μετατρέψτε την αδιαφορία σε εμμονή και κυριάρχησε στο παιχνίδι.">
+  <title></title>
   <meta name="Generator" content="Cocoa HTML Writer">
   <meta name="CocoaVersion" content="2299">
   <style type="text/css">
-    body {background-color: #000000}
     p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 14.0px Menlo; color: #6d6d6d; -webkit-text-stroke: #6d6d6d}
     p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 14.0px Menlo; color: #6b0001; -webkit-text-stroke: #6b0001}
     p.p3 {margin: 0.0px 0.0px 0.0px 0.0px; font: 14.0px Menlo; color: #4d5055; -webkit-text-stroke: #4d5055}
@@ -1032,13 +1030,13 @@
 <p class="p6"><span class="s7"></span><br></p>
 <p class="p10"><span class="s4"><span class="Apple-converted-space">                </span></span><span class="s11">const</span><span class="s4"> locations = [</span><span class="s1">"Athens"</span><span class="s4">, </span><span class="s1">"Thessaloniki"</span><span class="s4">, </span><span class="s1">"Patras"</span><span class="s4">, </span><span class="s1">"Nicosia"</span><span class="s4">, </span><span class="s1">"Limassol"</span><span class="s4">, </span><span class="s1">"Heraklion"</span><span class="s4">];</span></p>
 <p class="p7"><span class="s1"><span class="Apple-converted-space">                </span></span><span class="s11">const</span><span class="s1"> messages = [</span></p>
-<p class="p7"><span class="s1"><span class="Apple-converted-space">                    </span>{ key: </span><span class="s9">'toast_social_proof'</span><span class="s1">, location: </span><span class="s11">true</span><span class="s1">, icon: </span><span class="s9">'🌍'</span><span class="s1"> },</span></p>
-<p class="p7"><span class="s1"><span class="Apple-converted-space">                    </span>{ key: </span><span class="s9">'toast_scarcity'</span><span class="s1">, location: </span><span class="s11">false</span><span class="s1">, icon: </span><span class="s9">'🔥'</span><span class="s1"> }</span></p>
+<p class="p7"><span class="s1"><span class="Apple-converted-space">                    </span>{ key: </span><span class="s9">'toast_social_proof'</span><span class="s1">, icon: </span><span class="s9">'🌍'</span><span class="s1"> },</span></p>
+<p class="p7"><span class="s1"><span class="Apple-converted-space">                    </span>{ key: </span><span class="s9">'toast_scarcity'</span><span class="s1">, icon: </span><span class="s9">'🔥'</span><span class="s1"> }</span></p>
 <p class="p7"><span class="s1"><span class="Apple-converted-space">                </span>];</span></p>
 <p class="p7"><span class="s1"><span class="Apple-converted-space">                </span></span><span class="s11">const</span><span class="s1"> randomMessage = messages[</span><span class="s14">Math</span><span class="s1">.floor(</span><span class="s14">Math</span><span class="s1">.random() * messages.length)];</span></p>
 <p class="p7"><span class="s1"><span class="Apple-converted-space">                </span></span><span class="s11">let</span><span class="s1"> messageText = </span><span class="s11">this</span><span class="s1">.translations[</span><span class="s11">this</span><span class="s1">.state.currentLang][randomMessage.key];</span></p>
 <p class="p6"><span class="s7"></span><br></p>
-<p class="p7"><span class="s1"><span class="Apple-converted-space">                </span></span><span class="s11">if</span><span class="s1"> (randomMessage.location) {</span></p>
+<p class="p7"><span class="s1"><span class="Apple-converted-space">                </span></span><span class="s11">if</span><span class="s1"> (randomMessage.key === </span><span class="s9">'toast_social_proof'</span><span class="s1">) {</span></p>
 <p class="p7"><span class="s1"><span class="Apple-converted-space">                    </span></span><span class="s11">const</span><span class="s1"> randomLocation = locations[</span><span class="s14">Math</span><span class="s1">.floor(</span><span class="s14">Math</span><span class="s1">.random() * locations.length)];</span></p>
 <p class="p7"><span class="s1"><span class="Apple-converted-space">                    </span>messageText = messageText.replace(</span><span class="s9">'{{location}}'</span><span class="s1">, randomLocation);</span></p>
 <p class="p7"><span class="s1"><span class="Apple-converted-space">                </span>}</span></p>
